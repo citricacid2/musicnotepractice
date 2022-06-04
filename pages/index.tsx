@@ -1,86 +1,215 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
+import abcjs from 'abcjs'
+import { WebMidi, NoteMessageEvent } from 'webmidi'
+import { createRef, useEffect, useState } from 'react'
 
 const Home: NextPage = () => {
+  const possibleNotes: { abc: string; midi: string }[] = [
+    {
+      abc: 'C',
+      midi: 'C3',
+    },
+    {
+      abc: 'D',
+      midi: 'D3',
+    },
+    {
+      abc: 'E',
+      midi: 'E3',
+    },
+    {
+      abc: 'F',
+      midi: 'F3',
+    },
+    {
+      abc: 'G',
+      midi: 'G3',
+    },
+    {
+      abc: 'A',
+      midi: 'A3',
+    },
+    {
+      abc: 'B',
+      midi: 'B3',
+    },
+    {
+      abc: 'C',
+      midi: 'C4',
+    },
+    {
+      abc: 'D',
+      midi: 'D4',
+    },
+    {
+      abc: 'E',
+      midi: 'E4',
+    },
+    {
+      abc: 'F',
+      midi: 'F4',
+    },
+    {
+      abc: 'G',
+      midi: 'G4',
+    },
+    {
+      abc: 'A',
+      midi: 'A4',
+    },
+    {
+      abc: 'B',
+      midi: 'B4',
+    },
+    {
+      abc: 'C',
+      midi: 'C5',
+    },
+    {
+      abc: 'D',
+      midi: 'D5',
+    },
+    {
+      abc: 'E',
+      midi: 'E5',
+    },
+    {
+      abc: 'F',
+      midi: 'F5',
+    },
+  ]
+
+  const [note, setNote] = useState(possibleNotes[0])
+
+  useEffect(() => {
+    const abc = abcjs.renderAbc('paper', note.abc, {
+      // responsive: 'resize',
+      staffwidth: 100,
+    })
+  })
+
+  function checkNote(e: NoteMessageEvent) {
+    console.log('the piano played:', e.note.identifier)
+    if (note.midi === e.note.identifier) {
+      console.log('success')
+      newNote()
+    }
+  }
+
+  useEffect(() => {
+    // WebMidi.enable()
+    //   .then(onEnabled)
+    //   .catch((err) => alert(err))
+
+    function onEnabled() {
+      const inputs = WebMidi.inputs
+      if (inputs.length === 0) {
+        alert('No MIDI devices detected.')
+      } else {
+        inputs.forEach((device, index) => {
+          console.log(`${index}: ${device.name}`)
+          device.channels[1].removeListener()
+          device.channels[1].addListener('noteon', checkNote)
+        })
+      }
+    }
+  })
+
+  function newNote() {
+    setNote(possibleNotes[Math.floor(Math.random() * possibleNotes.length)])
+    console.log('target note:', note)
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
-
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="rounded-md bg-gray-100 p-3 font-mono text-lg">
-            pages/index.tsx
-          </code>
-        </p>
-
-        <div className="mt-6 flex max-w-4xl flex-wrap items-center justify-around sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="mt-6 w-96 rounded-xl border p-6 text-left hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+    <div className="grid h-screen grid-cols-4 grid-rows-3 items-stretch bg-blue-500 ">
+      <div className="col-span-2 row-span-2 m-5 rounded-lg bg-blue-100 p-5 shadow-lg">
+        <Heading value="Guess:" />
+        <div id="paper" className=""></div>
+      </div>
+      <div className="row-span-2 m-5 flex flex-col rounded-lg bg-blue-100 p-5 shadow-lg">
+        <Heading value="Mode:" />
+        <div className="grid grow items-stretch">
+          {['Note', 'Letter', 'Ear'].map((mode) => (
+            <div key={mode} className="grid items-stretch">
+              <input
+                className="peer hidden"
+                type="radio"
+                name="note"
+                id={mode}
+              />
+              <label
+                className="mx-10 my-5 flex cursor-pointer items-center justify-center rounded-lg border-2 bg-white hover:bg-slate-100 peer-checked:border-blue-500"
+                htmlFor={mode}
+              >
+                <p>{mode}</p>
+              </label>
+            </div>
+          ))}
         </div>
-      </main>
-
-      <footer className="flex h-24 w-full items-center justify-center border-t">
-        <a
-          className="flex items-center justify-center gap-2"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-        </a>
-      </footer>
+      </div>
+      <div className="row-span-3 m-5 flex flex-col rounded-lg bg-blue-100 p-5 shadow-lg">
+        <Heading value="Options:" />
+        <div className="grid grid-cols-2 items-stretch">
+          {possibleNotes.map((note) => (
+            <div key={note.midi} className="grid items-stretch">
+              <input
+                className="peer hidden"
+                type="checkbox"
+                name="note"
+                id={note.midi}
+                onChange={() => setNote(note)}
+              />
+              <label
+                className="m-2 cursor-pointer rounded-lg border-2 bg-white p-2 text-center hover:bg-slate-100 peer-checked:border-blue-500"
+                htmlFor={note.midi}
+              >
+                {note.midi}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className=" m-5 rounded-lg bg-blue-100 p-5 shadow-lg">
+        <Heading value="Device:" />
+        {WebMidi.enabled &&
+          WebMidi.inputs.map((device) => (
+            <div key={device.name} className="grid items-stretch">
+              <input
+                className="peer hidden"
+                type="radio"
+                name="note"
+                id={device.name}
+              />
+              <label
+                className="m-2 cursor-pointer rounded-lg border-2 bg-white p-2 text-center hover:bg-slate-100 peer-checked:border-blue-500"
+                htmlFor={device.name}
+              >
+                {device.name}
+              </label>
+            </div>
+          ))}
+      </div>
+      <div className="col-span-2 m-5 flex flex-row rounded-lg bg-blue-100 p-5 shadow-lg">
+        <div className="flex flex-1 flex-col items-stretch justify-center text-center">
+          <h1 className=" text-8xl font-bold">20</h1>
+          <h3 className="text-3xl text-gray-700">Correct</h3>
+        </div>
+        <div className="flex flex-1 flex-col items-stretch justify-center text-center">
+          <h1 className=" text-8xl font-bold">5</h1>
+          <h3 className="text-3xl text-gray-700">Incorrect</h3>
+        </div>
+        <div className="flex flex-1 flex-col items-stretch justify-center text-center">
+          <h1 className="text-8xl font-bold">0</h1>
+          <h3 className="text-3xl text-gray-700">Skipped</h3>
+        </div>
+      </div>
     </div>
   )
 }
+
+const Heading = ({ value }: { value: string }) => (
+  <h1 className="p-3 text-3xl font-bold">{value}</h1>
+)
 
 export default Home
